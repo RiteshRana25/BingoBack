@@ -8,17 +8,19 @@ export default function handler(req, res) {
   let playersData = JSON.parse(fs.readFileSync(dataFilePath, 'utf8'));
 
   if (req.method === 'GET') {
-    // Return all players
-    res.status(200).json({ playersData });
-  } else if (req.method === 'POST') {
+    return res.status(200).json({ playersData });
+  }
+
+  if (req.method === 'POST') {
     const { key, values } = req.body;
 
-    if (!key || !values) {
-      return res.status(400).json({ error: 'Key and values are required' });
+    if (!key || !Array.isArray(values)) {
+      return res.status(400).json({ error: 'Key and values array are required' });
     }
 
     if (playersData[key]) {
-      playersData[key] = [...new Set([...playersData[key], ...values])];
+      // Merge unique values
+      playersData[key] = Array.from(new Set([...playersData[key], ...values]));
     } else {
       playersData[key] = values;
     }
@@ -26,8 +28,8 @@ export default function handler(req, res) {
     // Save updated data
     fs.writeFileSync(dataFilePath, JSON.stringify(playersData, null, 2));
 
-    res.status(200).json({ message: 'Player updated', playersData });
-  } else {
-    res.status(405).json({ error: 'Method not allowed' });
+    return res.status(200).json({ message: 'Player updated', playersData });
   }
+
+  res.status(405).json({ error: 'Method not allowed' });
 }
